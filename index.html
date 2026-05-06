@@ -637,10 +637,18 @@ footer{
 })();
 
 /* ── STATUS CONFIG ─────────────────────────────────────────── */
-// ⚠️ EDITE AQUI:
 const GITHUB_USER = 'FALL90HZ';
-const GITHUB_REPO = 'status-bot';
-const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/status.json`;
+const GITHUB_REPO = 'bot-status';
+
+// Três fontes de leitura — tenta em ordem até uma funcionar
+const SOURCES = [
+  // 1. jsDelivr CDN — cache curto, sem bloqueio CORS
+  () => `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@main/status.json?t=${Date.now()}`,
+  // 2. raw.githubusercontent.com — fallback
+  () => `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/status.json?t=${Date.now()}`,
+  // 3. GitHub API — último recurso
+  () => `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/status.json`,
+];
 
 let busy = false;
 
@@ -703,28 +711,50 @@ function setLoading(on){
   }
 }
 
+async function tryFetchFrom(urlFn, isApi){
+  const res = await fetch(urlFn(), { cache: 'no-store' });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+
+  // GitHub API retorna base64; os outros retornam JSON direto
+  if(isApi && data.content){
+    const decoded = atob(data.content.replace(/\n/g,''));
+    return JSON.parse(decoded);
+  }
+  return data;
+}
+
 async function fetchStatus(){
   if(busy) return;
   setLoading(true);
-  try {
-    const res = await fetch(API_URL + '?t=' + Date.now(), {
-      headers:{'Accept':'application/vnd.github.v3+json','Cache-Control':'no-cache'},
-      cache:'no-store'
-    });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    const decoded = atob(data.content.replace(/\n/g,''));
-    const json = JSON.parse(decoded);
-    if(!['online','offline'].includes(json.status)) throw new Error('Status inválido');
-    applyStatus(json.status);
-  } catch(e){
-    document.getElementById('status-word').textContent = 'Erro';
-    document.getElementById('status-detail').textContent = e.message;
-    document.getElementById('orb').style.background = '#2a2d45';
-    document.getElementById('orb').style.boxShadow  = 'none';
-  } finally {
-    setLoading(false);
+
+  let lastError = null;
+
+  for(let i = 0; i < SOURCES.length; i++){
+    try {
+      const isApi = (i === 2); // terceira fonte é a GitHub API
+      const json  = await tryFetchFrom(SOURCES[i], isApi);
+
+      if(!['online','offline'].includes(json.status)){
+        throw new Error('Status inválido');
+      }
+
+      applyStatus(json.status);
+      setLoading(false);
+      return; // sucesso — para aqui
+    } catch(e){
+      lastError = e;
+      // tenta próxima fonte
+    }
   }
+
+  // Todas as fontes falharam
+  document.getElementById('status-word').textContent = 'Erro';
+  document.getElementById('status-detail').textContent =
+    'Não foi possível verificar. Tente novamente.';
+  document.getElementById('orb').style.background = '#2a2d45';
+  document.getElementById('orb').style.boxShadow  = 'none';
+  setLoading(false);
 }
 
 // Inicia
