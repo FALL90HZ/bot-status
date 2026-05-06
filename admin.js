@@ -5,7 +5,7 @@
 
 // ─── CONFIGURAÇÃO — só senha e repositório aqui ───────────────
 const ADMIN_CONFIG = {
-  PASSWORD:    'fall90hz2025',      // ← troque para sua senha
+  PASSWORD:    'fall90hz',      // ← troque para sua senha
   GITHUB_USER: 'FALL90HZ',         // ← seu usuário GitHub
   GITHUB_REPO: 'bot-status',       // ← nome do repositório
   FILE_PATH:   'status.json',
