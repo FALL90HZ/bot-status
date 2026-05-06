@@ -6,11 +6,11 @@
 // ─── ⚠️ CONFIGURAÇÃO — EDITE AQUI ─────────────────────────────
 const ADMIN_CONFIG = {
   // Senha do painel admin (troque para uma senha segura)
-  PASSWORD: 'fall90hz2025',
+  PASSWORD: 'fall90hz',
 
   // Seus dados do GitHub:
-  GITHUB_USER:  'SEU_USUARIO',
-  GITHUB_REPO:  'SEU_REPOSITORIO',
+  GITHUB_USER:  'FALL90HZ',
+  GITHUB_REPO:  'bot-status',
   GITHUB_TOKEN: 'SEU_GITHUB_TOKEN',
 
   // Arquivo de status no repositório
