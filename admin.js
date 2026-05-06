@@ -11,7 +11,7 @@ const ADMIN_CONFIG = {
   // Seus dados do GitHub:
   GITHUB_USER:  'FALL90HZ',
   GITHUB_REPO:  'bot-status',
-  GITHUB_TOKEN: 'SEU_GITHUB_TOKEN',
+  GITHUB_TOKEN: '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',
 
   // Arquivo de status no repositório
   FILE_PATH: 'status.json',
