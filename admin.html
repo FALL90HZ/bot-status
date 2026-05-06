@@ -11,7 +11,6 @@
 
   <div class="page-wrapper">
 
-    <!-- Header (always visible) -->
     <header class="site-header fade-in" style="max-width:700px;">
       <div class="logo">
         <div class="logo-icon">🛡️</div>
@@ -23,8 +22,7 @@
       <a href="index.html" class="header-badge" style="cursor:pointer;text-decoration:none;">← Ver Status</a>
     </header>
 
-
-    <!-- ==================== LOGIN FORM ==================== -->
+    <!-- LOGIN FORM -->
     <div id="login-view" class="fade-in-delay-1">
       <div class="login-card">
         <div class="card-glow"></div>
@@ -32,28 +30,33 @@
         <div class="login-header">
           <div class="login-icon">🔐</div>
           <div class="login-title">Acesso Restrito</div>
-          <div class="login-sub">Insira a senha de administrador</div>
+          <div class="login-sub">Insira as credenciais de administrador</div>
         </div>
 
         <div class="login-body">
+
           <div class="field-group">
-            <label class="field-label" for="password-input">Senha</label>
-            <input
-              class="field-input"
-              type="password"
-              id="password-input"
-              placeholder="••••••••••••"
-              autocomplete="current-password"
-            />
+            <label class="field-label" for="password-input">Senha do Painel</label>
+            <input class="field-input" type="password" id="password-input" placeholder="••••••••••••" autocomplete="current-password" />
           </div>
 
-          <div class="error-msg" id="login-error">
-            ✗ Senha incorreta. Tente novamente.
+          <div class="field-group" id="token-group">
+            <label class="field-label" for="token-input">
+              GitHub Token
+              <span style="color:var(--accent);font-size:10px;margin-left:6px;">● salvo no navegador</span>
+            </label>
+            <input class="field-input" type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-top:2px;">
+              Fica salvo só aqui no seu celular/browser. Nunca vai para o código.
+            </span>
           </div>
 
-          <button class="btn-primary" onclick="handleLogin()">
-            Entrar no Painel
-          </button>
+          <div class="error-msg" id="login-error">✗ Senha incorreta. Tente novamente.</div>
+          <div class="error-msg" id="token-error" style="border-color:rgba(255,160,0,0.3);color:#ffa500;background:rgba(255,160,0,0.07);">
+            ⚠ Informe o GitHub Token para continuar.
+          </div>
+
+          <button class="btn-primary" onclick="handleLogin()">Entrar no Painel</button>
 
           <p style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:0.05em;">
             Acesso limitado a administradores autorizados
@@ -62,23 +65,23 @@
       </div>
     </div>
 
-
-    <!-- ==================== ADMIN DASHBOARD ==================== -->
+    <!-- ADMIN DASHBOARD -->
     <div id="admin-view" style="display:none;width:100%;max-width:700px;" class="fade-in-delay-1">
 
       <div class="admin-card">
         <div class="card-glow"></div>
 
-        <!-- Admin header bar -->
         <div class="admin-header">
           <div>
             <div class="admin-title">Controle do Bot</div>
             <div class="admin-user" style="margin-top:4px;">Logado como: <span style="color:var(--accent);">Administrador</span></div>
           </div>
-          <button class="btn-logout" onclick="handleLogout()">Sair ↩</button>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="btn-logout" onclick="clearToken()" title="Apagar token salvo">🗑 Apagar Token</button>
+            <button class="btn-logout" onclick="handleLogout()">Sair ↩</button>
+          </div>
         </div>
 
-        <!-- Current status display -->
         <div class="admin-status-display">
           <span class="admin-status-label">Status Atual</span>
           <div class="admin-status-badge badge-offline" id="admin-badge">
@@ -90,14 +93,12 @@
           </p>
         </div>
 
-        <!-- Control buttons -->
         <div class="admin-controls">
           <button class="btn-control btn-online" id="btn-ligar" onclick="setStatus('online')">
             <span class="ctrl-icon">🟢</span>
             <span class="ctrl-label">Ligar Bot</span>
             <span class="ctrl-desc">Definir status como ONLINE</span>
           </button>
-
           <button class="btn-control btn-offline" id="btn-desligar" onclick="setStatus('offline')">
             <span class="ctrl-icon">🔴</span>
             <span class="ctrl-label">Desligar Bot</span>
@@ -105,7 +106,6 @@
           </button>
         </div>
 
-        <!-- Log de atividades -->
         <div class="admin-log" id="admin-log">
           <div class="log-line">
             <span class="log-time">[SISTEMA]</span>
@@ -116,8 +116,6 @@
       </div>
     </div>
 
-
-    <!-- Footer -->
     <footer class="site-footer fade-in-delay-2" style="max-width:700px;">
       <span class="footer-text">Painel Admin — FALL90HZ</span>
       <span class="footer-text" id="footer-clock"></span>
@@ -125,7 +123,6 @@
 
   </div>
 
-  <!-- Toast notification -->
   <div class="toast" id="toast">
     <span id="toast-icon">✓</span>
     <span id="toast-text">Mensagem</span>
