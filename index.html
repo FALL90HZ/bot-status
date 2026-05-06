@@ -1,674 +1,735 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bot Status — FALL90HZ</title>
-  <meta name="description" content="Status do bot FALL90HZ em tempo real."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d0f18'/><circle cx='16' cy='16' r='8' fill='%2300e87a'/></svg>"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FALL90HZ Store — Bot de Vendas</title>
+<meta name="description" content="O bot de vendas mais completo do Discord. PIX automático, estoque digital, suporte 24/7."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2307080f'/><text x='4' y='24' font-size='22'>⚡</text></svg>"/>
 
 <style>
-/* ── RESET ─────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 
-:root {
-  --c-online:  #00e87a;
-  --c-offline: #ff3d5a;
-  --c-accent:  #4d6fff;
-  --c-bg:      #07080f;
-  --c-card:    rgba(255,255,255,0.03);
-  --c-border:  rgba(255,255,255,0.07);
-  --c-text:    #dde1f0;
-  --c-muted:   #4a5070;
-  --status-color: var(--c-online);
-  --status-glow:  rgba(0,232,122,0.3);
-  --exo: 'Exo 2', sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+:root{
+  --bg:#07080f;
+  --bg2:#0b0d18;
+  --card:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.07);
+  --text:#e8eaf5;
+  --muted:#4a5070;
+  --muted2:#2a2d40;
+  --online:#00e87a;
+  --offline:#ff3d5a;
+  --accent:#5b6eff;
+  --syne:'Syne',sans-serif;
+  --mono:'DM Mono',monospace;
+  --status-c:var(--online);
+  --status-g:rgba(0,232,122,0.18);
 }
 
-body {
-  font-family: var(--exo);
-  background: var(--c-bg);
-  color: var(--c-text);
-  min-height: 100vh;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+body{
+  font-family:var(--syne);
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
 }
 
-/* ── CANVAS BACKGROUND ────────────────────────── */
-#bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+/* ── CANVAS ─────────────────────────────── */
+#cv{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6}
+
+/* ── NAV ────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 28px;
+  background:rgba(7,8,15,.8);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
 }
 
-/* ── NOISE OVERLAY ───────────────────────────── */
-body::after {
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  background-size: 200px;
-  pointer-events:none;
-  z-index:0;
-  opacity:.4;
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  font-weight:900;font-size:16px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text);
 }
 
-/* ── LAYOUT ───────────────────────────────────── */
-.page {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 480px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding: 24px 20px 32px;
+.nav-logo-icon{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),#a259ff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
 }
 
-/* ── TOPBAR ───────────────────────────────────── */
-.topbar {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
-  margin-bottom: 48px;
-  animation: fadeDown 0.6s ease both;
+.nav-actions{display:flex;gap:10px;align-items:center}
+
+.pill-status{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 14px;
+  border-radius:100px;
+  border:1px solid var(--border);
+  background:var(--card);
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);transition:all .3s;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.pill-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--muted);transition:background .4s,box-shadow .4s;
 }
 
-.brand-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c-accent);
-  box-shadow: 0 0 10px var(--c-accent);
-  animation: blink 2s ease-in-out infinite;
+.pill-status.is-online .pill-dot{
+  background:var(--online);
+  box-shadow:0 0 8px var(--online);
+  animation:pdot 2s ease-in-out infinite;
+}
+.pill-status.is-offline .pill-dot{background:var(--offline)}
+.pill-status.is-online{color:var(--online);border-color:rgba(0,232,122,.2)}
+.pill-status.is-offline{color:var(--offline);border-color:rgba(255,61,90,.2)}
+
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
+
+.btn-admin{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;
+  padding:8px 16px;border:1px solid var(--border);border-radius:100px;
+  transition:all .2s;background:var(--card);
+}
+.btn-admin:hover{color:var(--accent);border-color:var(--accent);background:rgba(91,110,255,.06)}
+
+/* ── HERO ────────────────────────────────── */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:120px 24px 80px;
 }
 
-@keyframes blink {
-  0%,100%{opacity:1} 50%{opacity:0.3}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:100px;
+  border:1px solid var(--border);
+  background:var(--card);
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:32px;
+  animation:fadeUp .6s ease both;
 }
 
-.brand-name {
-  font-family: var(--exo);
-  font-weight: 900;
-  font-size: 15px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--c-text);
+.hero-eyebrow-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 8px var(--accent);
+  animation:pdot 1.5s ease-in-out infinite;
 }
 
-.brand-tag {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--c-muted);
-  margin-top: 1px;
+.hero-title{
+  font-size:clamp(42px,11vw,80px);
+  font-weight:900;
+  line-height:.95;
+  letter-spacing:-.03em;
+  margin-bottom:24px;
+  animation:fadeUp .6s .1s ease both;
 }
 
-.admin-link {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--c-muted);
-  text-decoration: none;
-  padding: 7px 14px;
-  border: 1px solid var(--c-border);
-  border-radius: 20px;
-  transition: all 0.2s;
-  background: var(--c-card);
+.hero-title em{
+  font-style:normal;
+  color:var(--status-c);
+  text-shadow:0 0 60px var(--status-g);
+  transition:color .5s,text-shadow .5s;
 }
 
-.admin-link:hover {
-  color: var(--c-accent);
-  border-color: var(--c-accent);
-  background: rgba(77,111,255,0.08);
+.hero-sub{
+  font-size:16px;font-weight:400;
+  color:var(--muted);line-height:1.7;
+  max-width:380px;margin:0 auto 40px;
+  animation:fadeUp .6s .2s ease both;
 }
 
-/* ── HERO ─────────────────────────────────────── */
-.hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 44px;
-  width: 100%;
-  animation: fadeUp 0.7s 0.1s ease both;
+.hero-sub strong{color:var(--text)}
+
+.hero-cta{
+  display:flex;flex-wrap:wrap;gap:12px;
+  justify-content:center;margin-bottom:64px;
+  animation:fadeUp .6s .3s ease both;
 }
 
-/* ── ORBE ─────────────────────────────────────── */
-.orb-wrap {
-  position: relative;
-  width: 220px;
-  height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.btn-primary{
+  padding:16px 32px;border-radius:12px;
+  background:var(--status-c);border:none;
+  color:#000;font-family:var(--syne);
+  font-weight:800;font-size:14px;
+  letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;
+  transition:all .25s;
+  box-shadow:0 0 30px var(--status-g);
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 40px var(--status-g)}
+
+.btn-secondary{
+  padding:16px 32px;border-radius:12px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+  color:var(--text);font-family:var(--syne);
+  font-weight:700;font-size:14px;
+  letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;
+  transition:all .25s;
+}
+.btn-secondary:hover{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(255,255,255,.15);
+  transform:translateY(-3px);
 }
 
-/* Anéis orbitais */
-.ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid transparent;
-  transition: border-color 0.6s, box-shadow 0.6s;
+/* ── STATUS CARD ─────────────────────────── */
+.status-card{
+  width:100%;max-width:380px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;padding:32px 28px;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  backdrop-filter:blur(10px);
+  animation:fadeUp .6s .35s ease both;
+  position:relative;overflow:hidden;
 }
 
-.ring-1 {
-  width: 220px; height: 220px;
-  border-color: rgba(255,255,255,0.06);
-  animation: spin-cw 18s linear infinite;
+.status-card::before{
+  content:'';position:absolute;
+  top:-1px;left:50%;transform:translateX(-50%);
+  width:60%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--status-c),transparent);
+  opacity:.6;transition:background .5s;
 }
 
-.ring-2 {
-  width: 176px; height: 176px;
-  border-color: rgba(255,255,255,0.05);
-  animation: spin-ccw 12s linear infinite;
+.status-orb-wrap{
+  position:relative;
+  width:100px;height:100px;
+  display:flex;align-items:center;justify-content:center;
 }
 
-.ring-3 {
-  width: 136px; height: 136px;
-  border-color: var(--status-color);
-  opacity: 0.35;
-  animation: spin-cw 8s linear infinite;
-  transition: border-color 0.6s, opacity 0.6s;
+.orb-ring{
+  position:absolute;border-radius:50%;
+  border:1px solid var(--status-c);
+  opacity:.2;transition:border-color .5s;
+}
+.orb-ring-1{width:100px;height:100px;animation:spin 12s linear infinite}
+.orb-ring-2{width:75px;height:75px;animation:spin 8s linear infinite reverse;opacity:.3}
+
+.orb-core{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--status-c);
+  box-shadow:0 0 30px var(--status-g),0 0 60px var(--status-g);
+  transition:background .5s,box-shadow .5s;
+  animation:orb-pulse 2.5s ease-in-out infinite;
 }
 
-/* Pontos nos anéis */
-.ring-1::before, .ring-2::after, .ring-3::before {
-  content: '';
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--status-color);
-  box-shadow: 0 0 8px var(--status-color);
-  transition: background 0.6s, box-shadow 0.6s;
+.orb-core.loading{
+  background:var(--muted2);
+  box-shadow:none;animation:none;
 }
 
-.ring-1::before { top: -3px; left: 50%; transform: translateX(-50%); }
-.ring-2::after  { bottom: -3px; left: 50%; transform: translateX(-50%); }
-.ring-3::before { top: -3px; left: 50%; transform: translateX(-50%); }
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes orb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 
-@keyframes spin-cw  { to { transform: rotate(360deg); } }
-@keyframes spin-ccw { to { transform: rotate(-360deg); } }
-
-/* Glow de fundo radial */
-.orb-glow {
-  position: absolute;
-  width: 160px; height: 160px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--status-glow) 0%, transparent 70%);
-  transition: background 0.6s;
-  animation: throb 3s ease-in-out infinite;
+.status-label{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
 }
 
-@keyframes throb {
-  0%,100%{ transform: scale(1); opacity: 0.8; }
-  50%{ transform: scale(1.15); opacity: 1; }
+.status-word{
+  font-size:28px;font-weight:900;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--status-c);
+  text-shadow:0 0 20px var(--status-g);
+  transition:color .5s,text-shadow .5s;
+  line-height:1;
 }
 
-/* Orbe central */
-.orb-core {
-  position: relative;
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  background: var(--status-color);
-  box-shadow:
-    0 0 20px var(--status-color),
-    0 0 50px var(--status-glow),
-    inset 0 0 20px rgba(255,255,255,0.2);
-  transition: background 0.6s, box-shadow 0.6s;
-  animation: orb-pulse 2.5s ease-in-out infinite;
+.status-detail{
+  font-family:var(--mono);font-size:11px;
+  color:var(--muted);text-align:center;line-height:1.5;
 }
 
-@keyframes orb-pulse {
-  0%,100%{ transform: scale(1); }
-  50%{ transform: scale(1.06); }
+.btn-check{
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);background:none;
+  border:1px solid var(--border);
+  border-radius:100px;padding:8px 18px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-check:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
+.btn-check .ico{display:inline-block;font-size:13px}
+.btn-check.spinning .ico{animation:spin .6s linear infinite}
+
+/* ── STATS ROW ───────────────────────────── */
+.stats-row{
+  position:relative;z-index:1;
+  display:flex;justify-content:center;gap:0;
+  width:100%;max-width:600px;
+  margin:0 auto;padding:0 20px;
+  animation:fadeUp .6s .4s ease both;
 }
 
-/* Estado loading */
-.state-loading .orb-core {
-  background: #2a2d45;
-  box-shadow: none;
-  animation: none;
-}
-.state-loading .ring-3 { opacity: 0.1; }
-.state-loading .orb-glow { opacity: 0; }
-.state-loading .ring-1 { animation-duration: 3s; }
-
-/* Estado offline */
-.state-offline {
-  --status-color: var(--c-offline);
-  --status-glow: rgba(255,61,90,0.3);
-}
-.state-offline .orb-core { animation: none; }
-.state-offline .ring-3 { animation: none; }
-
-/* ── STATUS TEXT ──────────────────────────────── */
-.status-block {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+.stat{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;gap:4px;padding:32px 16px;
+  border-top:1px solid var(--border);
 }
 
-.status-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--c-muted);
+.stat:not(:last-child){border-right:1px solid var(--border)}
+
+.stat-num{
+  font-size:32px;font-weight:900;
+  letter-spacing:-.02em;color:var(--text);
 }
 
-.status-word {
-  font-family: var(--exo);
-  font-weight: 900;
-  font-size: clamp(52px, 15vw, 80px);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  color: var(--status-color);
-  text-shadow: 0 0 40px var(--status-glow);
-  transition: color 0.6s, text-shadow 0.6s;
-  position: relative;
+.stat-num span{color:var(--status-c);transition:color .5s}
+
+.stat-desc{
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
 }
 
-/* Linha decorativa abaixo do texto */
-.status-word::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40%;
-  height: 2px;
-  background: var(--status-color);
-  box-shadow: 0 0 8px var(--status-color);
-  border-radius: 2px;
-  transition: background 0.6s, box-shadow 0.6s;
+/* ── FEATURES ────────────────────────────── */
+.section{
+  position:relative;z-index:1;
+  width:100%;max-width:640px;
+  margin:0 auto;padding:80px 24px;
 }
 
-.status-desc {
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--c-muted);
-  line-height: 1.7;
-  max-width: 300px;
-  margin-top: 6px;
+.section-eyebrow{
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px;
 }
 
-/* ── REFRESH BTN ──────────────────────────────── */
-.btn-refresh {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: var(--c-card);
-  border: 1px solid var(--c-border);
-  border-radius: 100px;
-  color: var(--c-muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
+.section-title{
+  font-size:clamp(28px,7vw,44px);font-weight:900;
+  line-height:1.05;letter-spacing:-.02em;
+  margin-bottom:16px;
 }
 
-.btn-refresh:hover {
-  border-color: var(--c-accent);
-  color: var(--c-accent);
-  background: rgba(77,111,255,0.06);
+.section-sub{
+  font-size:15px;color:var(--muted);
+  line-height:1.7;margin-bottom:40px;
 }
 
-.btn-refresh .spin { display: inline-block; }
-.btn-refresh.spinning .spin {
-  animation: spin-cw 0.6s linear infinite;
+.features-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
 }
 
-/* ── STATS CARDS ──────────────────────────────── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-  width: 100%;
-  animation: fadeUp 0.7s 0.25s ease both;
+.feat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:24px 20px;
+  transition:border-color .2s,background .2s;
+}
+.feat:hover{
+  border-color:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
 }
 
-.stat-card {
-  background: var(--c-card);
-  border: 1px solid var(--c-border);
-  border-radius: 14px;
-  padding: 18px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(10px);
-  transition: border-color 0.2s, background 0.2s;
+.feat-icon{font-size:24px;margin-bottom:12px}
+
+.feat-title{
+  font-size:15px;font-weight:800;
+  letter-spacing:-.01em;margin-bottom:6px;
 }
 
-.stat-card:hover {
-  border-color: rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
+.feat-desc{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ── CHECKLIST ───────────────────────────── */
+.checklist{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+
+.check-item{
+  display:flex;align-items:center;gap:12px;
+  font-size:14px;color:var(--muted);
 }
 
-.stat-label {
-  font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--c-muted);
+.check-item::before{
+  content:'✓';
+  width:22px;height:22px;border-radius:6px;
+  background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.2);
+  color:var(--online);font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
 }
 
-.stat-value {
-  font-family: var(--mono);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--c-text);
-  line-height: 1;
+/* ── CTA SECTION ─────────────────────────── */
+.cta-section{
+  position:relative;z-index:1;
+  text-align:center;
+  padding:80px 24px 100px;
 }
 
-.stat-sub {
-  font-size: 9px;
-  color: var(--c-muted);
-  font-family: var(--mono);
+.cta-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:100px;
+  border:1px solid rgba(91,110,255,.3);
+  background:rgba(91,110,255,.08);
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:28px;
 }
 
-/* ── SIGNAL BARS (decorativo) ─────────────────── */
-.signal-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 18px;
+.cta-title{
+  font-size:clamp(32px,9vw,60px);font-weight:900;
+  line-height:1;letter-spacing:-.03em;
+  margin-bottom:16px;
 }
 
-.signal-bar {
-  width: 4px;
-  border-radius: 2px;
-  background: var(--c-muted);
-  transition: background 0.5s;
+.cta-sub{
+  font-size:15px;color:var(--muted);
+  line-height:1.7;max-width:360px;
+  margin:0 auto 36px;
 }
 
-.signal-bar:nth-child(1){ height: 30%; }
-.signal-bar:nth-child(2){ height: 55%; }
-.signal-bar:nth-child(3){ height: 75%; }
-.signal-bar:nth-child(4){ height: 100%; }
-
-.state-online .signal-bar  { background: var(--c-online); box-shadow: 0 0 6px rgba(0,232,122,0.5); }
-.state-offline .signal-bar { background: var(--c-offline); }
-.state-offline .signal-bar:nth-child(3),
-.state-offline .signal-bar:nth-child(4) { background: var(--c-muted); box-shadow: none; }
-
-/* ── FOOTER ───────────────────────────────────── */
-.footer {
-  margin-top: 36px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px;
-  animation: fadeUp 0.7s 0.35s ease both;
+.cta-btns{
+  display:flex;flex-wrap:wrap;
+  gap:12px;justify-content:center;
+  margin-bottom:32px;
 }
 
-.footer-text {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: var(--c-muted);
-  text-transform: uppercase;
+.cta-checks{
+  display:flex;flex-wrap:wrap;
+  gap:20px;justify-content:center;
+  font-family:var(--mono);font-size:11px;
+  color:var(--muted);letter-spacing:.05em;
 }
 
-/* ── DIVIDER LINE ─────────────────────────────── */
-.divider {
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--c-border), transparent);
-  margin: 32px 0;
-  animation: fadeUp 0.7s 0.2s ease both;
+.cta-check::before{content:'✓ ';color:var(--online)}
+
+/* ── FOOTER ──────────────────────────────── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  padding:28px 28px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
 }
 
-/* ── ANIMATIONS ───────────────────────────────── */
-@keyframes fadeUp {
-  from{ opacity:0; transform:translateY(20px); }
-  to{   opacity:1; transform:translateY(0); }
-}
-@keyframes fadeDown {
-  from{ opacity:0; transform:translateY(-16px); }
-  to{   opacity:1; transform:translateY(0); }
+.footer-brand{
+  font-weight:900;font-size:14px;letter-spacing:.08em;
+  text-transform:uppercase;
 }
 
-/* ── RESPONSIVE ───────────────────────────────── */
-@media(max-width:400px){
-  .stats{ grid-template-columns:1fr 1fr; }
-  .stat-card:last-child{ grid-column:span 2; }
-  .orb-wrap{ width:190px; height:190px; }
-  .ring-1{ width:190px; height:190px; }
+.footer-text{
+  font-family:var(--mono);font-size:10px;
+  color:var(--muted);letter-spacing:.05em;
+}
+
+/* ── DIVIDER ─────────────────────────────── */
+.hr{
+  position:relative;z-index:1;
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+}
+
+/* ── ANIMATIONS ──────────────────────────── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── RESPONSIVE ──────────────────────────── */
+@media(max-width:480px){
+  .features-grid{grid-template-columns:1fr}
+  .stats-row{flex-direction:column}
+  .stat:not(:last-child){border-right:none;border-bottom:1px solid var(--border)}
+  footer{flex-direction:column;text-align:center}
+  nav{padding:14px 18px}
 }
 </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
+<canvas id="cv"></canvas>
 
-<div class="page" id="page-root">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-dot"></div>
-      <div>
-        <div class="brand-name">Fall90hz</div>
-        <div class="brand-tag">Bot Monitor</div>
-      </div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">⚡</div>
+    Fall90hz
+  </div>
+  <div class="nav-actions">
+    <div class="pill-status" id="nav-pill">
+      <div class="pill-dot"></div>
+      <span id="nav-pill-text">Verificando</span>
     </div>
-    <a href="admin.html" class="admin-link">Admin →</a>
+    <a href="admin.html" class="btn-admin">Admin</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+
+  <div class="hero-eyebrow">
+    <div class="hero-eyebrow-dot"></div>
+    Fall90hz Store — Bot de Vendas
   </div>
 
-  <!-- HERO -->
-  <div class="hero" id="hero">
+  <h1 class="hero-title">
+    Compre com<br/>
+    <em id="hero-em">segurança</em><br/>
+    no Discord
+  </h1>
 
-    <!-- ORB -->
-    <div class="orb-wrap" id="orb-wrap">
-      <div class="orb-glow" id="orb-glow"></div>
-      <div class="ring ring-1"></div>
-      <div class="ring ring-2"></div>
-      <div class="ring ring-3"></div>
-      <div class="orb-core" id="orb-core"></div>
-    </div>
+  <p class="hero-sub">
+    <strong>PIX automático, entrega instantânea</strong> e suporte dedicado.<br/>
+    O jeito mais fácil de comprar produtos digitais.
+  </p>
 
-    <!-- TEXT -->
-    <div class="status-block">
-      <span class="status-eyebrow">Status do Bot</span>
-      <div class="status-word" id="status-word">—</div>
-      <p class="status-desc" id="status-desc">Verificando conexão...</p>
-    </div>
-
-    <!-- REFRESH -->
-    <button class="btn-refresh" id="btn-refresh" onclick="fetchStatus()">
-      <span class="spin">↻</span>
-      <span>Atualizar</span>
+  <div class="hero-cta">
+    <a href="https://discord.gg/fall90hz" target="_blank" class="btn-primary" id="hero-btn">
+      Entrar no Discord
+    </a>
+    <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+      Ver recursos ↓
     </button>
-
   </div>
 
-  <!-- DIVIDER -->
-  <div class="divider"></div>
-
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat-card">
-      <span class="stat-label">Sinal</span>
-      <div class="signal-bars" id="signal-bars">
-        <div class="signal-bar"></div>
-        <div class="signal-bar"></div>
-        <div class="signal-bar"></div>
-        <div class="signal-bar"></div>
-      </div>
+  <!-- STATUS CARD -->
+  <div class="status-card">
+    <div class="status-orb-wrap">
+      <div class="orb-ring orb-ring-1"></div>
+      <div class="orb-ring orb-ring-2"></div>
+      <div class="orb-core loading" id="orb"></div>
     </div>
-    <div class="stat-card">
-      <span class="stat-label">Atualiza em</span>
-      <span class="stat-value" id="stat-countdown">30</span>
-      <span class="stat-sub">segundos</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">Última ver.</span>
-      <span class="stat-value" id="stat-time" style="font-size:13px;">--:--</span>
-      <span class="stat-sub">horário local</span>
-    </div>
+    <span class="status-label">Status do Bot</span>
+    <div class="status-word" id="status-word">Verificando...</div>
+    <p class="status-detail" id="status-detail">Checando conexão com o servidor...</p>
+    <button class="btn-check" id="btn-check" onclick="fetchStatus()">
+      <span class="ico" id="check-ico">↻</span>
+      <span>Verificar agora</span>
+    </button>
   </div>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <span class="footer-text">© 2025 Fall90hz</span>
-    <span class="footer-text" id="footer-live">⬤ live</span>
-  </div>
+</section>
 
+<!-- STATS -->
+<div class="stats-row" id="features">
+  <div class="stat">
+    <div class="stat-num">24<span>/7</span></div>
+    <div class="stat-desc">Disponível</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num"><span>PIX</span></div>
+    <div class="stat-desc">Automático</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">0<span>ms</span></div>
+    <div class="stat-desc">Espera</div>
+  </div>
 </div>
 
-<script src="script.js"></script>
+<div class="hr"></div>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="section-eyebrow">⚡ Recursos</div>
+  <h2 class="section-title">Tudo que você<br/>precisa pra comprar</h2>
+  <p class="section-sub">Sistema completo de vendas automáticas. Sem espera, sem complicação.</p>
+
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Entrega Instantânea</div>
+      <div class="feat-desc">Produto entregue automaticamente após confirmação do pagamento.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">💳</div>
+      <div class="feat-title">PIX Automático</div>
+      <div class="feat-desc">Gera QR Code e confirma pagamento em segundos, sem precisar falar com ninguém.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-title">100% Seguro</div>
+      <div class="feat-desc">Transações verificadas e historial completo de todas as compras.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎮</div>
+      <div class="feat-title">Free Fire</div>
+      <div class="feat-desc">Especializado em produtos para Free Fire. Estoque sempre atualizado.</div>
+    </div>
+    <div class="feat" style="grid-column:span 2">
+      <div class="feat-icon">🛒</div>
+      <div class="feat-title">Carrinho Privado</div>
+      <div class="feat-desc">Canal exclusivo pra sua compra. Sua privacidade garantida, nenhum outro membro vê sua transação.</div>
+    </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-badge">⚡ Pronto para começar?</div>
+  <h2 class="cta-title">Compre agora<br/>sem complicação</h2>
+  <p class="cta-sub">Acesse o servidor, escolha seu produto e finalize com PIX em menos de 1 minuto.</p>
+  <div class="cta-btns">
+    <a href="https://discord.gg/fall90hz" target="_blank" class="btn-primary" id="cta-btn">
+      Acessar o Discord
+    </a>
+    <a href="https://www.tiktok.com/@fall90hz" target="_blank" class="btn-secondary">
+      Ver no TikTok
+    </a>
+  </div>
+  <div class="cta-checks">
+    <span class="cta-check">Entrega imediata</span>
+    <span class="cta-check">Sem cadastro</span>
+    <span class="cta-check">Suporte no Discord</span>
+    <span class="cta-check">PIX seguro</span>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">⚡ Fall90hz</div>
+  <div class="footer-text">© 2025 Fall90hz Store — Todos os direitos reservados</div>
+  <a href="admin.html" class="footer-text" style="color:var(--muted);text-decoration:none;">Admin →</a>
+</footer>
+
+
 <script>
-/* ── CANVAS PARTICLES ─────────────────────────── */
+/* ── CANVAS PARTICLES ─── */
 (function(){
-  const canvas = document.getElementById('bg-canvas');
-  const ctx    = canvas.getContext('2d');
-  let W, H, particles;
-
-  function resize(){
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  let W,H,pts;
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  function mk(){pts=Array.from({length:Math.floor(W*H/20000)},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,
+    r:Math.random()*1.2+.4
+  }))}
+  function col(){
+    const r=document.body.style.getPropertyValue('--status-c');
+    if(r.includes('0,232')) return '0,232,122';
+    if(r.includes('255,61')) return '255,61,90';
+    return '91,110,255';
   }
-
-  function mkParticles(){
-    const n = Math.floor((W * H) / 18000);
-    particles = Array.from({length: n}, () => ({
-      x:  Math.random() * W,
-      y:  Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r:  Math.random() * 1.5 + 0.5,
-    }));
-  }
-
   function draw(){
-    ctx.clearRect(0, 0, W, H);
-
-    // Get current status color
-    const isOnline  = document.getElementById('page-root').classList.contains('state-online');
-    const isOffline = document.getElementById('page-root').classList.contains('state-offline');
-    const col = isOnline ? '0,232,122' : isOffline ? '255,61,90' : '77,111,255';
-
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if(p.x < 0) p.x = W;
-      if(p.x > W) p.x = 0;
-      if(p.y < 0) p.y = H;
-      if(p.y > H) p.y = 0;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(${col},0.35)`;
-      ctx.fill();
+    ctx.clearRect(0,0,W,H);
+    const c=col();
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${c},.25)`;ctx.fill();
     });
-
-    // Lines between close particles
-    for(let i=0; i<particles.length; i++){
-      for(let j=i+1; j<particles.length; j++){
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d  = Math.sqrt(dx*dx + dy*dy);
-        if(d < 120){
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = `rgba(${col},${0.08*(1-d/120)})`;
-          ctx.lineWidth   = 0.5;
-          ctx.stroke();
-        }
-      }
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<130){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle=`rgba(${c},${.07*(1-d/130)})`;ctx.lineWidth=.6;ctx.stroke();}
     }
-
     requestAnimationFrame(draw);
   }
-
-  window.addEventListener('resize', () => { resize(); mkParticles(); });
-  resize(); mkParticles(); draw();
+  window.addEventListener('resize',()=>{resize();mk()});
+  resize();mk();draw();
 })();
 
-/* ── STATUS INTEGRATION ───────────────────────── */
-const root = document.getElementById('page-root');
+/* ── STATUS CONFIG ─────────────────────────────────────────── */
+// ⚠️ EDITE AQUI:
+const GITHUB_USER = 'FALL90HZ';
+const GITHUB_REPO = 'bot-status';
+const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/status.json`;
 
-// Override applyStatus from script.js
-const _origApply = window.applyStatus;
-window.applyStatus = function(status){
-  root.classList.remove('state-online','state-offline','state-loading');
-  root.classList.add('state-' + status);
+let busy = false;
 
-  const word = document.getElementById('status-word');
-  const desc = document.getElementById('status-desc');
+/* ── APPLY STATUS ── */
+function applyStatus(status){
+  const online = status === 'online';
 
-  word.textContent = status === 'online' ? 'Online' : 'Offline';
-  desc.textContent = status === 'online'
-    ? 'O bot está ativo e processando pedidos normalmente.'
-    : 'O bot está temporariamente fora do ar. Aguarde.';
+  // CSS vars no body
+  document.body.style.setProperty('--status-c', online ? 'var(--online)' : 'var(--offline)');
+  document.body.style.setProperty('--status-g', online
+    ? 'rgba(0,232,122,0.18)' : 'rgba(255,61,90,0.18)');
 
-  document.title = (status === 'online' ? '🟢' : '🔴') + ' Bot ' +
-    (status === 'online' ? 'Online' : 'Offline') + ' — FALL90HZ';
-};
+  // Nav pill
+  const pill = document.getElementById('nav-pill');
+  pill.className = 'pill-status ' + (online ? 'is-online' : 'is-offline');
+  document.getElementById('nav-pill-text').textContent = online ? 'Online' : 'Offline';
 
-// Override setLoading
-window.setLoading = function(on){
-  const btn = document.getElementById('btn-refresh');
+  // Hero em
+  document.getElementById('hero-em').textContent = online ? 'segurança' : 'aguarde';
+
+  // Orb
+  const orb = document.getElementById('orb');
+  orb.className = 'orb-core' + (online ? '' : ' offline');
+  orb.style.background = online ? 'var(--online)' : 'var(--offline)';
+  orb.style.boxShadow  = online
+    ? '0 0 30px rgba(0,232,122,.6),0 0 60px rgba(0,232,122,.3)'
+    : '0 0 30px rgba(255,61,90,.5)';
+  orb.style.animation = online ? 'orb-pulse 2.5s ease-in-out infinite' : 'none';
+
+  // Status word
+  document.getElementById('status-word').textContent = online ? 'Online ✓' : 'Offline ✗';
+  document.getElementById('status-word').style.color = online ? 'var(--online)' : 'var(--offline)';
+
+  // Detail
+  document.getElementById('status-detail').textContent = online
+    ? 'Bot ativo — compras funcionando normalmente.'
+    : 'Bot temporariamente fora do ar. Volte em breve.';
+
+  // Title
+  document.title = (online ? '🟢' : '🔴') + ' Fall90hz Store';
+}
+
+function setLoading(on){
+  const orb = document.getElementById('orb');
+  const ico  = document.getElementById('check-ico');
+  const btn  = document.getElementById('btn-check');
   if(on){
-    root.classList.add('state-loading');
-    btn.classList.add('spinning');
-    window._isRefreshing = true;
+    orb.className = 'orb-core loading';
+    orb.style.cssText = '';
+    document.getElementById('status-word').textContent = 'Verificando...';
+    document.getElementById('status-word').style.color = 'var(--muted)';
+    document.getElementById('status-detail').textContent = 'Checando conexão com o servidor...';
+    ico.style.animation = 'spin .6s linear infinite';
+    btn.disabled = true;
+    busy = true;
   } else {
-    root.classList.remove('state-loading');
-    btn.classList.remove('spinning');
-    window._isRefreshing = false;
+    ico.style.animation = 'none';
+    btn.disabled = false;
+    busy = false;
   }
-};
+}
 
-// Override updateTime
-window.updateTime = function(){
-  document.getElementById('stat-time').textContent =
-    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-};
+async function fetchStatus(){
+  if(busy) return;
+  setLoading(true);
+  try {
+    const res = await fetch(API_URL + '?t=' + Date.now(), {
+      headers:{'Accept':'application/vnd.github.v3+json','Cache-Control':'no-cache'},
+      cache:'no-store'
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const decoded = atob(data.content.replace(/\n/g,''));
+    const json = JSON.parse(decoded);
+    if(!['online','offline'].includes(json.status)) throw new Error('Status inválido');
+    applyStatus(json.status);
+  } catch(e){
+    document.getElementById('status-word').textContent = 'Erro';
+    document.getElementById('status-detail').textContent = e.message;
+    document.getElementById('orb').style.background = '#2a2d45';
+    document.getElementById('orb').style.boxShadow  = 'none';
+  } finally {
+    setLoading(false);
+  }
+}
 
-// Countdown
-let cd = 30;
-setInterval(()=>{
-  cd--;
-  if(cd<=0) cd=30;
-  document.getElementById('stat-countdown').textContent = cd;
-}, 1000);
-
-// Footer clock blink
-setInterval(()=>{
-  const el = document.getElementById('footer-live');
-  el.style.opacity = el.style.opacity === '0.3' ? '1' : '0.3';
-}, 1200);
-
-// Initial loading state
-root.classList.add('state-loading');
+// Inicia
+fetchStatus();
+setInterval(fetchStatus, 30000);
 </script>
 </body>
 </html>
