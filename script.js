@@ -1,75 +1,55 @@
 /* ============================================================
-   script.js — Lógica da página pública de status
-   FALL90HZ Bot Monitor
+   script.js — Página pública de status
+   Lê via GitHub API (sem cache) em vez do raw.githubusercontent
    ============================================================ */
 
 // ─── CONFIGURAÇÃO ─────────────────────────────────────────────
 const CONFIG = {
-  // ⚠️ SUBSTITUA com seu usuário e repositório do GitHub:
-  GITHUB_USER: 'FALL90HZ',
-  GITHUB_REPO: 'bot-status',
-  // Intervalo de atualização automática (ms)
-  REFRESH_INTERVAL: 30000,
+  GITHUB_USER: 'FALL90HZ',       // ← seu usuário GitHub
+  GITHUB_REPO: 'bot-status',     // ← nome do repositório
+  REFRESH_INTERVAL: 30000,       // 30 segundos
 };
 
-const STATUS_URL = `https://raw.githubusercontent.com/${CONFIG.GITHUB_USER}/${CONFIG.GITHUB_REPO}/main/status.json`;
+// Usa a API do GitHub (sem cache) em vez do raw
+const API_URL = `https://api.github.com/repos/${CONFIG.GITHUB_USER}/${CONFIG.GITHUB_REPO}/contents/status.json`;
 
 // ─── ESTADO ───────────────────────────────────────────────────
-let refreshTimer = null;
-let currentStatus = null;
 let isRefreshing = false;
+let countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
 
-// ─── ELEMENTOS DOM ────────────────────────────────────────────
-const el = {
-  ring:       () => document.getElementById('status-ring'),
-  dot:        () => document.getElementById('status-dot'),
-  text:       () => document.getElementById('status-text'),
-  desc:       () => document.getElementById('status-desc'),
-  statTime:   () => document.getElementById('stat-time'),
-  icon:       () => document.getElementById('refresh-icon'),
-};
-
-// ─── ESTADO VISUAL ────────────────────────────────────────────
+// ─── STATUS ───────────────────────────────────────────────────
 const STATUS_CONFIG = {
   online: {
     ringClass: 'status-online',
     text: 'Online',
     desc: 'O bot está ativo e processando pedidos normalmente.',
+    emoji: '🟢',
   },
   offline: {
     ringClass: 'status-offline',
     text: 'Offline',
     desc: 'O bot está temporariamente fora do ar. Por favor, aguarde.',
+    emoji: '🔴',
   },
 };
 
 function applyStatus(status) {
-  const cfg = STATUS_CONFIG[status];
+  const cfg  = STATUS_CONFIG[status];
   if (!cfg) return;
 
-  const ring = el.ring();
-  const txt  = el.text();
-  const desc = el.desc();
-
-  // Remove classes anteriores
+  const ring = document.getElementById('status-ring');
   ring.classList.remove('status-online', 'status-offline', 'status-loading');
   ring.classList.add(cfg.ringClass);
 
-  // Atualiza textos
-  txt.textContent  = cfg.text;
-  desc.textContent = cfg.desc;
-
-  // Atualiza documento
-  document.title = `${cfg.text === 'Online' ? '🟢' : '🔴'} Bot ${cfg.text} — FALL90HZ`;
-
-  currentStatus = status;
+  document.getElementById('status-text').textContent = cfg.text;
+  document.getElementById('status-desc').textContent = cfg.desc;
+  document.title = `${cfg.emoji} Bot ${cfg.text} — FALL90HZ`;
 }
 
-function setLoading(loading) {
-  const ring = el.ring();
-  const icon = el.icon();
-
-  if (loading) {
+function setLoading(on) {
+  const ring = document.getElementById('status-ring');
+  const icon = document.getElementById('refresh-icon');
+  if (on) {
     ring.classList.remove('status-online', 'status-offline');
     ring.classList.add('status-loading');
     icon.style.animation = 'spin 0.7s linear infinite';
@@ -82,106 +62,76 @@ function setLoading(loading) {
 }
 
 function updateTime() {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-  el.statTime().textContent = timeStr;
+  document.getElementById('stat-time').textContent =
+    new Date().toLocaleTimeString('pt-BR');
 }
 
-// ─── BUSCA DE STATUS ──────────────────────────────────────────
+// ─── FETCH VIA API (SEM CACHE) ────────────────────────────────
 async function fetchStatus() {
   if (isRefreshing) return;
-
   setLoading(true);
 
   try {
-    // Adiciona cache-busting para sempre pegar versão mais recente
-    const cacheBust = `?t=${Date.now()}`;
-    const response  = await fetch(STATUS_URL + cacheBust, { cache: 'no-store' });
+    // A API do GitHub retorna o conteúdo em base64
+    // Adicionamos timestamp no header pra garantir sem cache
+    const res = await fetch(API_URL, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Cache-Control': 'no-cache',
+      },
+      cache: 'no-store',
+    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    // Decodifica o conteúdo base64
+    const decoded = atob(data.content.replace(/\n/g, ''));
+    const json    = JSON.parse(decoded);
+
+    if (!json.status || !['online', 'offline'].includes(json.status)) {
+      throw new Error('Status inválido no arquivo');
     }
 
-    const data = await response.json();
-
-    if (!data.status || !['online', 'offline'].includes(data.status)) {
-      throw new Error('Formato de status inválido');
-    }
-
-    applyStatus(data.status);
+    applyStatus(json.status);
 
   } catch (error) {
-    console.error('[FetchStatus] Erro:', error);
-
-    const ring = el.ring();
+    console.error('[FetchStatus]', error);
+    const ring = document.getElementById('status-ring');
     ring.classList.remove('status-loading', 'status-online', 'status-offline');
     ring.classList.add('status-offline');
-
-    el.text().textContent  = 'Erro';
-    el.desc().textContent  = `Não foi possível verificar o status. Verifique se o repositório está correto. (${error.message})`;
-    document.title = '⚠️ Erro — FALL90HZ Bot Monitor';
-
+    document.getElementById('status-text').textContent = 'Erro';
+    document.getElementById('status-desc').textContent =
+      `Não foi possível verificar o status. (${error.message})`;
+    document.title = '⚠️ Erro — FALL90HZ';
   } finally {
     updateTime();
     setLoading(false);
-
-    // Pisca o ícone de refresh
-    const icon = el.icon();
+    // Pisca ícone de refresh
+    const icon = document.getElementById('refresh-icon');
     icon.style.color = 'var(--accent)';
-    setTimeout(() => { icon.style.color = ''; }, 500);
+    setTimeout(() => { icon.style.color = ''; }, 400);
   }
-}
-
-// ─── INICIALIZAÇÃO ────────────────────────────────────────────
-function init() {
-  // Verificar se repositório foi configurado
-  if (CONFIG.GITHUB_USER === 'SEU_USUARIO') {
-    const ring = el.ring();
-    ring.classList.remove('status-loading');
-    ring.classList.add('status-offline');
-    el.text().textContent = 'Configurar';
-    el.desc().innerHTML =
-      '⚠️ Abra o arquivo <code style="font-family:var(--mono);background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">script.js</code> e substitua ' +
-      '<strong>SEU_USUARIO</strong> e <strong>SEU_REPOSITORIO</strong> com seus dados do GitHub.';
-    isRefreshing = false;
-    updateTime();
-    return;
-  }
-
-  // Busca inicial
-  fetchStatus();
-
-  // Auto-refresh periódico
-  refreshTimer = setInterval(() => {
-    fetchStatus();
-    updateCountdown();
-  }, CONFIG.REFRESH_INTERVAL);
-
-  // Countdown do próximo refresh
-  startCountdown();
 }
 
 // ─── COUNTDOWN ────────────────────────────────────────────────
-let countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
-
 function startCountdown() {
-  const statInterval = document.getElementById('stat-interval');
+  const el = document.getElementById('stat-interval');
   countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
 
   setInterval(() => {
     countdownValue--;
-    if (countdownValue <= 0) countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
-    statInterval.textContent = `${countdownValue}s`;
+    if (countdownValue <= 0) {
+      countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
+    }
+    el.textContent = `${countdownValue}s`;
   }, 1000);
 }
 
-function updateCountdown() {
-  countdownValue = CONFIG.REFRESH_INTERVAL / 1000;
-}
-
-// ─── START ────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', init);
+// ─── INIT ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  fetchStatus();
+  setInterval(fetchStatus, CONFIG.REFRESH_INTERVAL);
+  startCountdown();
+});

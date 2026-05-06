@@ -1,93 +1,674 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bot Status — FALL90HZ</title>
-  <meta name="description" content="Monitoramento de status do bot FALL90HZ em tempo real." />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="description" content="Status do bot FALL90HZ em tempo real."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d0f18'/><circle cx='16' cy='16' r='8' fill='%2300e87a'/></svg>"/>
 
-  <!-- Favicon inline SVG -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234d6fff'/><circle cx='16' cy='16' r='8' fill='%2300e87a'/></svg>" />
+<style>
+/* ── RESET ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --c-online:  #00e87a;
+  --c-offline: #ff3d5a;
+  --c-accent:  #4d6fff;
+  --c-bg:      #07080f;
+  --c-card:    rgba(255,255,255,0.03);
+  --c-border:  rgba(255,255,255,0.07);
+  --c-text:    #dde1f0;
+  --c-muted:   #4a5070;
+  --status-color: var(--c-online);
+  --status-glow:  rgba(0,232,122,0.3);
+  --exo: 'Exo 2', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--exo);
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── CANVAS BACKGROUND ────────────────────────── */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── NOISE OVERLAY ───────────────────────────── */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px;
+  pointer-events:none;
+  z-index:0;
+  opacity:.4;
+}
+
+/* ── LAYOUT ───────────────────────────────────── */
+.page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 24px 20px 32px;
+}
+
+/* ── TOPBAR ───────────────────────────────────── */
+.topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-bottom: 48px;
+  animation: fadeDown 0.6s ease both;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 0 10px var(--c-accent);
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100%{opacity:1} 50%{opacity:0.3}
+}
+
+.brand-name {
+  font-family: var(--exo);
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-text);
+}
+
+.brand-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-top: 1px;
+}
+
+.admin-link {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  text-decoration: none;
+  padding: 7px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: 20px;
+  transition: all 0.2s;
+  background: var(--c-card);
+}
+
+.admin-link:hover {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+  background: rgba(77,111,255,0.08);
+}
+
+/* ── HERO ─────────────────────────────────────── */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 44px;
+  width: 100%;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+
+/* ── ORBE ─────────────────────────────────────── */
+.orb-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Anéis orbitais */
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: border-color 0.6s, box-shadow 0.6s;
+}
+
+.ring-1 {
+  width: 220px; height: 220px;
+  border-color: rgba(255,255,255,0.06);
+  animation: spin-cw 18s linear infinite;
+}
+
+.ring-2 {
+  width: 176px; height: 176px;
+  border-color: rgba(255,255,255,0.05);
+  animation: spin-ccw 12s linear infinite;
+}
+
+.ring-3 {
+  width: 136px; height: 136px;
+  border-color: var(--status-color);
+  opacity: 0.35;
+  animation: spin-cw 8s linear infinite;
+  transition: border-color 0.6s, opacity 0.6s;
+}
+
+/* Pontos nos anéis */
+.ring-1::before, .ring-2::after, .ring-3::before {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--status-color);
+  box-shadow: 0 0 8px var(--status-color);
+  transition: background 0.6s, box-shadow 0.6s;
+}
+
+.ring-1::before { top: -3px; left: 50%; transform: translateX(-50%); }
+.ring-2::after  { bottom: -3px; left: 50%; transform: translateX(-50%); }
+.ring-3::before { top: -3px; left: 50%; transform: translateX(-50%); }
+
+@keyframes spin-cw  { to { transform: rotate(360deg); } }
+@keyframes spin-ccw { to { transform: rotate(-360deg); } }
+
+/* Glow de fundo radial */
+.orb-glow {
+  position: absolute;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--status-glow) 0%, transparent 70%);
+  transition: background 0.6s;
+  animation: throb 3s ease-in-out infinite;
+}
+
+@keyframes throb {
+  0%,100%{ transform: scale(1); opacity: 0.8; }
+  50%{ transform: scale(1.15); opacity: 1; }
+}
+
+/* Orbe central */
+.orb-core {
+  position: relative;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--status-color);
+  box-shadow:
+    0 0 20px var(--status-color),
+    0 0 50px var(--status-glow),
+    inset 0 0 20px rgba(255,255,255,0.2);
+  transition: background 0.6s, box-shadow 0.6s;
+  animation: orb-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes orb-pulse {
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.06); }
+}
+
+/* Estado loading */
+.state-loading .orb-core {
+  background: #2a2d45;
+  box-shadow: none;
+  animation: none;
+}
+.state-loading .ring-3 { opacity: 0.1; }
+.state-loading .orb-glow { opacity: 0; }
+.state-loading .ring-1 { animation-duration: 3s; }
+
+/* Estado offline */
+.state-offline {
+  --status-color: var(--c-offline);
+  --status-glow: rgba(255,61,90,0.3);
+}
+.state-offline .orb-core { animation: none; }
+.state-offline .ring-3 { animation: none; }
+
+/* ── STATUS TEXT ──────────────────────────────── */
+.status-block {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.status-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.status-word {
+  font-family: var(--exo);
+  font-weight: 900;
+  font-size: clamp(52px, 15vw, 80px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--status-color);
+  text-shadow: 0 0 40px var(--status-glow);
+  transition: color 0.6s, text-shadow 0.6s;
+  position: relative;
+}
+
+/* Linha decorativa abaixo do texto */
+.status-word::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 2px;
+  background: var(--status-color);
+  box-shadow: 0 0 8px var(--status-color);
+  border-radius: 2px;
+  transition: background 0.6s, box-shadow 0.6s;
+}
+
+.status-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--c-muted);
+  line-height: 1.7;
+  max-width: 300px;
+  margin-top: 6px;
+}
+
+/* ── REFRESH BTN ──────────────────────────────── */
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 100px;
+  color: var(--c-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: rgba(77,111,255,0.06);
+}
+
+.btn-refresh .spin { display: inline-block; }
+.btn-refresh.spinning .spin {
+  animation: spin-cw 0.6s linear infinite;
+}
+
+/* ── STATS CARDS ──────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  width: 100%;
+  animation: fadeUp 0.7s 0.25s ease both;
+}
+
+.stat-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.stat-card:hover {
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+}
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 9px;
+  color: var(--c-muted);
+  font-family: var(--mono);
+}
+
+/* ── SIGNAL BARS (decorativo) ─────────────────── */
+.signal-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+}
+
+.signal-bar {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--c-muted);
+  transition: background 0.5s;
+}
+
+.signal-bar:nth-child(1){ height: 30%; }
+.signal-bar:nth-child(2){ height: 55%; }
+.signal-bar:nth-child(3){ height: 75%; }
+.signal-bar:nth-child(4){ height: 100%; }
+
+.state-online .signal-bar  { background: var(--c-online); box-shadow: 0 0 6px rgba(0,232,122,0.5); }
+.state-offline .signal-bar { background: var(--c-offline); }
+.state-offline .signal-bar:nth-child(3),
+.state-offline .signal-bar:nth-child(4) { background: var(--c-muted); box-shadow: none; }
+
+/* ── FOOTER ───────────────────────────────────── */
+.footer {
+  margin-top: 36px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  animation: fadeUp 0.7s 0.35s ease both;
+}
+
+.footer-text {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+
+/* ── DIVIDER LINE ─────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-border), transparent);
+  margin: 32px 0;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+
+/* ── ANIMATIONS ───────────────────────────────── */
+@keyframes fadeUp {
+  from{ opacity:0; transform:translateY(20px); }
+  to{   opacity:1; transform:translateY(0); }
+}
+@keyframes fadeDown {
+  from{ opacity:0; transform:translateY(-16px); }
+  to{   opacity:1; transform:translateY(0); }
+}
+
+/* ── RESPONSIVE ───────────────────────────────── */
+@media(max-width:400px){
+  .stats{ grid-template-columns:1fr 1fr; }
+  .stat-card:last-child{ grid-column:span 2; }
+  .orb-wrap{ width:190px; height:190px; }
+  .ring-1{ width:190px; height:190px; }
+}
+</style>
 </head>
 <body>
 
-  <div class="page-wrapper">
+<canvas id="bg-canvas"></canvas>
 
-    <!-- Header -->
-    <header class="site-header fade-in">
-      <div class="logo">
-        <div class="logo-icon">⚡</div>
-        <div>
-          <div class="logo-text">FALL90HZ</div>
-          <div class="logo-sub">Bot Monitor</div>
-        </div>
+<div class="page" id="page-root">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="brand-name">Fall90hz</div>
+        <div class="brand-tag">Bot Monitor</div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button class="btn-refresh" onclick="fetchStatus()">
-          <span class="icon" id="refresh-icon">↻</span>
-          <span>Atualizar</span>
-        </button>
-        <a href="admin.html" class="header-badge" style="cursor:pointer;">Painel Admin →</a>
-      </div>
-    </header>
+    </div>
+    <a href="admin.html" class="admin-link">Admin →</a>
+  </div>
 
-    <!-- Main Card -->
-    <main class="main-card fade-in-delay-1">
-      <div class="card-glow"></div>
+  <!-- HERO -->
+  <div class="hero" id="hero">
 
-      <!-- Status Section -->
-      <section class="status-section" id="status-container">
+    <!-- ORB -->
+    <div class="orb-wrap" id="orb-wrap">
+      <div class="orb-glow" id="orb-glow"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="orb-core" id="orb-core"></div>
+    </div>
 
-        <div class="status-indicator" id="status-indicator">
-          <div class="status-ring status-loading" id="status-ring">
-            <div class="status-dot" id="status-dot"></div>
-          </div>
-        </div>
+    <!-- TEXT -->
+    <div class="status-block">
+      <span class="status-eyebrow">Status do Bot</span>
+      <div class="status-word" id="status-word">—</div>
+      <p class="status-desc" id="status-desc">Verificando conexão...</p>
+    </div>
 
-        <div class="status-info">
-          <span class="status-label">Status do Bot</span>
-          <span class="status-value" id="status-text">Carregando...</span>
-          <p class="status-desc" id="status-desc">
-            Aguardando verificação do status do bot...
-          </p>
-        </div>
-
-        <button class="btn-refresh" onclick="fetchStatus()" style="margin-top:8px;">
-          <span class="icon">↻</span>
-          <span>Verificar novamente</span>
-        </button>
-
-      </section>
-
-      <!-- Stats Row -->
-      <div class="stats-row">
-        <div class="stat-box">
-          <span class="stat-label">Última Verificação</span>
-          <span class="stat-value" id="stat-time">--:--</span>
-          <span class="stat-sub">horário local</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-label">Atualização Auto</span>
-          <span class="stat-value" id="stat-interval">30s</span>
-          <span class="stat-sub">intervalo</span>
-        </div>
-        <div class="stat-box">
-          <span class="stat-label">Fonte</span>
-          <span class="stat-value" style="font-size:14px;letter-spacing:0;">GitHub</span>
-          <span class="stat-sub">status.json</span>
-        </div>
-      </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="site-footer fade-in-delay-2">
-      <span class="footer-text">© 2025 FALL90HZ — Todos os direitos reservados</span>
-      <a href="admin.html" class="footer-link">Acessar admin</a>
-    </footer>
+    <!-- REFRESH -->
+    <button class="btn-refresh" id="btn-refresh" onclick="fetchStatus()">
+      <span class="spin">↻</span>
+      <span>Atualizar</span>
+    </button>
 
   </div>
 
-  <script src="script.js"></script>
+  <!-- DIVIDER -->
+  <div class="divider"></div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card">
+      <span class="stat-label">Sinal</span>
+      <div class="signal-bars" id="signal-bars">
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Atualiza em</span>
+      <span class="stat-value" id="stat-countdown">30</span>
+      <span class="stat-sub">segundos</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Última ver.</span>
+      <span class="stat-value" id="stat-time" style="font-size:13px;">--:--</span>
+      <span class="stat-sub">horário local</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span class="footer-text">© 2025 Fall90hz</span>
+    <span class="footer-text" id="footer-live">⬤ live</span>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+/* ── CANVAS PARTICLES ─────────────────────────── */
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles;
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function mkParticles(){
+    const n = Math.floor((W * H) / 18000);
+    particles = Array.from({length: n}, () => ({
+      x:  Math.random() * W,
+      y:  Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r:  Math.random() * 1.5 + 0.5,
+    }));
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+
+    // Get current status color
+    const isOnline  = document.getElementById('page-root').classList.contains('state-online');
+    const isOffline = document.getElementById('page-root').classList.contains('state-offline');
+    const col = isOnline ? '0,232,122' : isOffline ? '255,61,90' : '77,111,255';
+
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0) p.x = W;
+      if(p.x > W) p.x = 0;
+      if(p.y < 0) p.y = H;
+      if(p.y > H) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${col},0.35)`;
+      ctx.fill();
+    });
+
+    // Lines between close particles
+    for(let i=0; i<particles.length; i++){
+      for(let j=i+1; j<particles.length; j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx*dx + dy*dy);
+        if(d < 120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(${col},${0.08*(1-d/120)})`;
+          ctx.lineWidth   = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); mkParticles(); });
+  resize(); mkParticles(); draw();
+})();
+
+/* ── STATUS INTEGRATION ───────────────────────── */
+const root = document.getElementById('page-root');
+
+// Override applyStatus from script.js
+const _origApply = window.applyStatus;
+window.applyStatus = function(status){
+  root.classList.remove('state-online','state-offline','state-loading');
+  root.classList.add('state-' + status);
+
+  const word = document.getElementById('status-word');
+  const desc = document.getElementById('status-desc');
+
+  word.textContent = status === 'online' ? 'Online' : 'Offline';
+  desc.textContent = status === 'online'
+    ? 'O bot está ativo e processando pedidos normalmente.'
+    : 'O bot está temporariamente fora do ar. Aguarde.';
+
+  document.title = (status === 'online' ? '🟢' : '🔴') + ' Bot ' +
+    (status === 'online' ? 'Online' : 'Offline') + ' — FALL90HZ';
+};
+
+// Override setLoading
+window.setLoading = function(on){
+  const btn = document.getElementById('btn-refresh');
+  if(on){
+    root.classList.add('state-loading');
+    btn.classList.add('spinning');
+    window._isRefreshing = true;
+  } else {
+    root.classList.remove('state-loading');
+    btn.classList.remove('spinning');
+    window._isRefreshing = false;
+  }
+};
+
+// Override updateTime
+window.updateTime = function(){
+  document.getElementById('stat-time').textContent =
+    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+};
+
+// Countdown
+let cd = 30;
+setInterval(()=>{
+  cd--;
+  if(cd<=0) cd=30;
+  document.getElementById('stat-countdown').textContent = cd;
+}, 1000);
+
+// Footer clock blink
+setInterval(()=>{
+  const el = document.getElementById('footer-live');
+  el.style.opacity = el.style.opacity === '0.3' ? '1' : '0.3';
+}, 1200);
+
+// Initial loading state
+root.classList.add('state-loading');
+</script>
 </body>
 </html>
