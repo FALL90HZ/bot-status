@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bot Status — FALL90HZ</title>
+  <meta name="description" content="Monitoramento de status do bot FALL90HZ em tempo real." />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Favicon inline SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234d6fff'/><circle cx='16' cy='16' r='8' fill='%2300e87a'/></svg>" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <!-- Header -->
+    <header class="site-header fade-in">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <div class="logo-text">FALL90HZ</div>
+          <div class="logo-sub">Bot Monitor</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn-refresh" onclick="fetchStatus()">
+          <span class="icon" id="refresh-icon">↻</span>
+          <span>Atualizar</span>
+        </button>
+        <a href="admin.html" class="header-badge" style="cursor:pointer;">Painel Admin →</a>
+      </div>
+    </header>
+
+    <!-- Main Card -->
+    <main class="main-card fade-in-delay-1">
+      <div class="card-glow"></div>
+
+      <!-- Status Section -->
+      <section class="status-section" id="status-container">
+
+        <div class="status-indicator" id="status-indicator">
+          <div class="status-ring status-loading" id="status-ring">
+            <div class="status-dot" id="status-dot"></div>
+          </div>
+        </div>
+
+        <div class="status-info">
+          <span class="status-label">Status do Bot</span>
+          <span class="status-value" id="status-text">Carregando...</span>
+          <p class="status-desc" id="status-desc">
+            Aguardando verificação do status do bot...
+          </p>
+        </div>
+
+        <button class="btn-refresh" onclick="fetchStatus()" style="margin-top:8px;">
+          <span class="icon">↻</span>
+          <span>Verificar novamente</span>
+        </button>
+
+      </section>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-label">Última Verificação</span>
+          <span class="stat-value" id="stat-time">--:--</span>
+          <span class="stat-sub">horário local</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Atualização Auto</span>
+          <span class="stat-value" id="stat-interval">30s</span>
+          <span class="stat-sub">intervalo</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Fonte</span>
+          <span class="stat-value" style="font-size:14px;letter-spacing:0;">GitHub</span>
+          <span class="stat-sub">status.json</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer fade-in-delay-2">
+      <span class="footer-text">© 2025 FALL90HZ — Todos os direitos reservados</span>
+      <a href="admin.html" class="footer-link">Acessar admin</a>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

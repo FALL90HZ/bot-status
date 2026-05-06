@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — FALL90HZ Bot Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234d6fff'/><text x='8' y='22' font-size='16'>🔑</text></svg>" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <!-- Header (always visible) -->
+    <header class="site-header fade-in" style="max-width:700px;">
+      <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+          <div class="logo-text">FALL90HZ</div>
+          <div class="logo-sub">Painel de Administração</div>
+        </div>
+      </div>
+      <a href="index.html" class="header-badge" style="cursor:pointer;text-decoration:none;">← Ver Status</a>
+    </header>
+
+
+    <!-- ==================== LOGIN FORM ==================== -->
+    <div id="login-view" class="fade-in-delay-1">
+      <div class="login-card">
+        <div class="card-glow"></div>
+
+        <div class="login-header">
+          <div class="login-icon">🔐</div>
+          <div class="login-title">Acesso Restrito</div>
+          <div class="login-sub">Insira a senha de administrador</div>
+        </div>
+
+        <div class="login-body">
+          <div class="field-group">
+            <label class="field-label" for="password-input">Senha</label>
+            <input
+              class="field-input"
+              type="password"
+              id="password-input"
+              placeholder="••••••••••••"
+              autocomplete="current-password"
+            />
+          </div>
+
+          <div class="error-msg" id="login-error">
+            ✗ Senha incorreta. Tente novamente.
+          </div>
+
+          <button class="btn-primary" onclick="handleLogin()">
+            Entrar no Painel
+          </button>
+
+          <p style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:0.05em;">
+            Acesso limitado a administradores autorizados
+          </p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== ADMIN DASHBOARD ==================== -->
+    <div id="admin-view" style="display:none;width:100%;max-width:700px;" class="fade-in-delay-1">
+
+      <div class="admin-card">
+        <div class="card-glow"></div>
+
+        <!-- Admin header bar -->
+        <div class="admin-header">
+          <div>
+            <div class="admin-title">Controle do Bot</div>
+            <div class="admin-user" style="margin-top:4px;">Logado como: <span style="color:var(--accent);">Administrador</span></div>
+          </div>
+          <button class="btn-logout" onclick="handleLogout()">Sair ↩</button>
+        </div>
+
+        <!-- Current status display -->
+        <div class="admin-status-display">
+          <span class="admin-status-label">Status Atual</span>
+          <div class="admin-status-badge badge-offline" id="admin-badge">
+            <div class="badge-dot"></div>
+            <span class="badge-text" id="admin-badge-text">Carregando...</span>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-top:4px;" id="admin-status-updated">
+            Verificando...
+          </p>
+        </div>
+
+        <!-- Control buttons -->
+        <div class="admin-controls">
+          <button class="btn-control btn-online" id="btn-ligar" onclick="setStatus('online')">
+            <span class="ctrl-icon">🟢</span>
+            <span class="ctrl-label">Ligar Bot</span>
+            <span class="ctrl-desc">Definir status como ONLINE</span>
+          </button>
+
+          <button class="btn-control btn-offline" id="btn-desligar" onclick="setStatus('offline')">
+            <span class="ctrl-icon">🔴</span>
+            <span class="ctrl-label">Desligar Bot</span>
+            <span class="ctrl-desc">Definir status como OFFLINE</span>
+          </button>
+        </div>
+
+        <!-- Log de atividades -->
+        <div class="admin-log" id="admin-log">
+          <div class="log-line">
+            <span class="log-time">[SISTEMA]</span>
+            Aguardando ações do administrador...
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="site-footer fade-in-delay-2" style="max-width:700px;">
+      <span class="footer-text">Painel Admin — FALL90HZ</span>
+      <span class="footer-text" id="footer-clock"></span>
+    </footer>
+
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-text">Mensagem</span>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
