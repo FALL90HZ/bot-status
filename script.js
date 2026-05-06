@@ -6,8 +6,8 @@
 // ─── CONFIGURAÇÃO ─────────────────────────────────────────────
 const CONFIG = {
   // ⚠️ SUBSTITUA com seu usuário e repositório do GitHub:
-  GITHUB_USER: 'SEU_USUARIO',
-  GITHUB_REPO: 'SEU_REPOSITORIO',
+  GITHUB_USER: 'FALL90HZ',
+  GITHUB_REPO: 'bot-status',
   // Intervalo de atualização automática (ms)
   REFRESH_INTERVAL: 30000,
 };
